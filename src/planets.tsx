@@ -1,8 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-const textureLoader: any = new THREE.TextureLoader();
-
 class CelestialBody
 {
     public radius: number;
@@ -18,7 +16,7 @@ class CelestialBody
     public bodyOrbit: any;
     public bodySystem: any;
 
-    constructor(scene: any, radius: number, widthSeg: number, heightSeg: number, texturePath: string, label: string, labelColor: string,
+    constructor(scene: any, radius: number, widthSeg: number, heightSeg: number, material: any, label: string, labelColor: string,
         pos: [number, number, number] = [0, 0, 0], axisSpeed: [number, number, number] = [0, 0, 0], labelClass: string = '')
     {
         this.radius = radius;
@@ -31,8 +29,7 @@ class CelestialBody
 
         // Kreira sphere so texture
         const bodyGeo = new THREE.SphereGeometry(radius, this.widthSeg, this.heightSeg);
-        const bodyMat = new THREE.MeshBasicMaterial({map: textureLoader.load(texturePath)});
-        this.bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+        this.bodyMesh = new THREE.Mesh(bodyGeo, material);
         this.bodyMesh.name = label;
 
         // Se koristi za kreiranje na label na teloto
@@ -42,7 +39,7 @@ class CelestialBody
         this.div.style.backgroundColor = 'transparent';
         this.div.style.color = labelColor;
         this.label = new CSS2DObject(this.div);
-        this.label.position.set(0, 25.0, 0 );
+        this.label.position.set(0, 3.0, 0 );
         this.label.center.set(0, 0);
         this.label.layers.set(0);
 
@@ -74,12 +71,14 @@ export class Star extends CelestialBody
     // Moze da se upotreba ako se dvizi nekade sonceto
     public orbitSpeed: [number, number, number];
 
-    constructor(scene: any, radius: number, widthSeg: number, heightSeg: number, texturePath: string, label: string, labelColor: string,
+    constructor(scene: any, radius: number, widthSeg: number, heightSeg: number, material: any, label: string, labelColor: string,
         pos: [number, number, number] = [0, 0, 0], axisSpeed: [number, number, number] = [0, 0, 0], orbitSpeed: [number, number, number],
         labelClass: string = 'star-label')
     {
-        super(scene, radius, widthSeg, heightSeg, texturePath, label, labelColor, pos, axisSpeed, labelClass);
+        super(scene, radius, widthSeg, heightSeg, material, label, labelColor, pos, axisSpeed, labelClass);
         this.orbitSpeed = orbitSpeed;
+        this.bodyMesh.castShadow = true;
+        this.bodyMesh.receiveShadow = false;
     }
 
     update(): void
@@ -93,12 +92,14 @@ export class Planet extends CelestialBody
     public orbitSpeed: [number, number, number];
     public ringMesh: any = null;
     public star: any = null;
+    public cloudsMesh: any = null;
+    public cloudAxisSpeed: any = null;
 
-    constructor(scene: any, star: Star | Planet, radius: number, widthSeg: number, heightSeg: number, texturePath: string, label: string, labelColor: string,
+    constructor(scene: any, star: Star | Planet, radius: number, widthSeg: number, heightSeg: number, material: any, label: string, labelColor: string,
         pos: [number, number, number], axisSpeed: [number, number, number] = [0, 0, 0], orbitSpeed: [number, number, number] = [0, 0, 0],
         labelClass: string = 'planet-label')
     {
-        super(scene, radius, widthSeg, heightSeg, texturePath, label, labelColor, pos, axisSpeed, labelClass);
+        super(scene, radius, widthSeg, heightSeg, material, label, labelColor, pos, axisSpeed, labelClass);
         this.star = star;
         this.orbitSpeed = orbitSpeed;
         this.label.center.set(0, 1);
@@ -117,22 +118,25 @@ export class Planet extends CelestialBody
         star.bodySystem.add(this.bodyOrbit);
     }
 
-    addRing(innerRadius: number, outerRadius: number, thetaSegments: number, ringRotation: [number, number, number], texturePath: string): void
+    addRing(innerRadius: number, outerRadius: number, thetaSegments: number, ringRotation: [number, number, number], material: any): void
     {
         const ringGeo = new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments);
-        const ringMat = new THREE.MeshBasicMaterial({
-            map: textureLoader.load(texturePath),
-            side: THREE.DoubleSide,
-            transparent: true
-        });
 
-        this.ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        this.ringMesh = new THREE.Mesh(ringGeo, material);
         this.ringMesh.position.set(this.bodyMesh.position.x, this.bodyMesh.position.y, this.bodyMesh.position.z);
         this.ringMesh.rotateX(ringRotation[0]);
         this.ringMesh.rotateY(ringRotation[1]);
         this.ringMesh.rotateZ(ringRotation[2]);
         console.log(this.ringMesh.position);
         this.bodySystem.add(this.ringMesh);
+    }
+
+    addClouds(cloudsMaterial: any, cloudAxisSpeed: [number, number, number]): void
+    {
+        const cloudsGeo = new THREE.SphereGeometry(this.radius*1.01, this.widthSeg, this.heightSeg);
+        this.cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMaterial);
+        this.cloudAxisSpeed = cloudAxisSpeed;
+        this.bodySystem.add(this.cloudsMesh);
     }
 
     update(): void
@@ -142,5 +146,12 @@ export class Planet extends CelestialBody
         this.bodyOrbit.rotateX(this.orbitSpeed[0]);
         this.bodyOrbit.rotateY(this.orbitSpeed[1]);
         this.bodyOrbit.rotateZ(this.orbitSpeed[2]);
+
+        if(this.cloudsMesh !== null)
+        {
+            this.cloudsMesh.rotateX(this.cloudAxisSpeed[0]);
+            this.cloudsMesh.rotateY(this.cloudAxisSpeed[1]);
+            this.cloudsMesh.rotateZ(this.cloudAxisSpeed[2]);
+        }
     }
 }
