@@ -5,7 +5,7 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import {Star, Planet} from './planets';
 import './textures';
 import { earthClouds, earthTexture, ganymedeTexture, jupiterTexture, marsTexture, mercuryTexture, moonTexture, neptunTexture, plutoTexture, saturnRingTexture, saturnTexture, sunTexture, titanTexture, uranusRingTexture, uranusTexture, venusTexture } from './textures';
-
+import {loadModel, spaceShip1, spaceShip2} from './models';
 
 const renderer: any = new THREE.WebGLRenderer({
   antialias: true, canvas: document.getElementById('viewport') as HTMLCanvasElement
@@ -23,6 +23,7 @@ document.body.appendChild( labelrenderer.domElement );
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 40000);
+let targetPlanet: any = null;
 
 const listener = new THREE.AudioListener();
 
@@ -32,21 +33,16 @@ camera.position.y = 100;
 camera.position.z = 200;
 camera.lookAt(0, 0, 0);
 
-/*
 new RGBELoader()
 .load('./static/textures/background/starsbackground.hdr', function(texture){
   texture.mapping = THREE.EquirectangularReflectionMapping;
   scene.background = texture;
   scene.environment = texture;
 });
-*/
 
 const pointLight = new THREE.PointLight(0xFFFFFF, 1300.0, 3000.0, 1.2);
 pointLight.position.set(0, 0, 0);
 scene.add(pointLight);
-
-const h = new THREE.PointLightHelper(pointLight, 2);
-scene.add(h);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.listenToKeyEvents(window);
@@ -86,6 +82,22 @@ const plutoObj = new Planet(scene, sunObj, 0.5, 50, 50, plutoTexture, 'Pluto', '
 //renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
 earthObj.addClouds(earthClouds, [0.0012, 0.013, 0.0016]);
+await loadModel();
+scene.add(spaceShip1.object);
+//spaceShip1.object.position.set(100, 0, 0);
+spaceShip1.setTargetBase(mercuryObj);
+spaceShip1.setStartingBase(earthObj);
+//spaceShip1.object.lookAt(190, 0, 0);
+spaceShip1.startJourney();
+// BAZI
+mercuryObj.addBase('teal', [0, mercuryObj.radius-0.14, 0]);
+venusObj.addBase('brown', [0.0, venusObj.radius-0.14, 1.00]);
+earthObj.addBase('lightblue', [earthObj.radius-0.1, 0.0, 0.0]);
+marsObj.addBase('lightblue', [0, marsObj.radius/2 - 1.0, 3.4]);
+jupiterObj.addBase('brown', [0, jupiterObj.radius/2 - 1.0, 8.5]);
+saturnObj.addBase('brown', [0, saturnObj.radius/2 - 1.0, 8.4]);
+uranusObj.addBase('red', [0, uranusObj.radius/2 - 1.0, 2.4]);
+neptunObj.addBase('red', [0, neptunObj.radius/2 - 1.0, 1.4]);
 
 function clickedObject(event: Event): void
 {
@@ -104,7 +116,7 @@ function clickedObject(event: Event): void
       const oldTargetPosition = controls.target.clone();
       controls.target = cor;
       camera.position.sub(oldTargetPosition.sub(controls.target));
-
+      targetPlanet = intersects[i].object;
 
       console.log(cor);
       // TOMIIIIIIIIIIII
@@ -137,19 +149,68 @@ function animate(): void {
 	requestAnimationFrame( animate );
   raycaster.setFromCamera(pointer, camera);
 
+  if(targetPlanet !== null)
+  {
+    const targetPlanetNewPosition = new THREE.Vector3();
+    targetPlanet.getWorldPosition(targetPlanetNewPosition);
+    camera.lookAt(targetPlanetNewPosition);
+    const oldTargetPosition = controls.target.clone();
+    controls.target = targetPlanetNewPosition;
+    camera.position.sub(oldTargetPosition.sub(controls.target));
+  }
+
   sunObj.update();
+
   mercuryObj.update();
+  mercuryObj.updateBaseLabelVisibility(camera);
+  mercuryObj.updateSatellitesLabelVisibility(camera);
+  mercuryObj.updateSelfLabelVisibility(camera);
+
   venusObj.update();
+  venusObj.updateBaseLabelVisibility(camera);
+  venusObj.updateSatellitesLabelVisibility(camera);
+  venusObj.updateSelfLabelVisibility(camera);
+
   earthObj.update();
+  earthObj.updateBaseLabelVisibility(camera);
+  earthObj.updateSatellitesLabelVisibility(camera);
+  earthObj.updateSelfLabelVisibility(camera);
   moonObj.update();
+
   marsObj.update();
+  marsObj.updateBaseLabelVisibility(camera);
+  marsObj.updateSatellitesLabelVisibility(camera);
+  marsObj.updateSelfLabelVisibility(camera);
+
   jupiterObj.update();
+  jupiterObj.updateBaseLabelVisibility(camera);
+  jupiterObj.updateSatellitesLabelVisibility(camera);
+  jupiterObj.updateSelfLabelVisibility(camera);
   ganymedeObj.update();
+
   saturnObj.update();
+  saturnObj.updateBaseLabelVisibility(camera);
+  saturnObj.updateSatellitesLabelVisibility(camera);
+  saturnObj.updateSelfLabelVisibility(camera);
   titanObj.update();
+
   uranusObj.update();
+  uranusObj.updateBaseLabelVisibility(camera);
+  uranusObj.updateSatellitesLabelVisibility(camera);
+  uranusObj.updateSelfLabelVisibility(camera);
+
   neptunObj.update();
+  neptunObj.updateBaseLabelVisibility(camera);
+  neptunObj.updateSatellitesLabelVisibility(camera);
+  neptunObj.updateSelfLabelVisibility(camera);
+
   plutoObj.update();
+  plutoObj.updateBaseLabelVisibility(camera);
+  plutoObj.updateSatellitesLabelVisibility(camera);
+  plutoObj.updateSelfLabelVisibility(camera);
+
+  spaceShip1.update();
+
   const delta = clock.getDelta();
   controls.update(delta);
 

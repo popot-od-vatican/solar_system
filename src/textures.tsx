@@ -4,8 +4,6 @@ const textureLoader: any = new THREE.TextureLoader();
 
 export const sunTexture = new THREE.MeshBasicMaterial({
     map: textureLoader.load('./static/textures/stars/sun.jpg'),
-    /*emissive: 0xffd700,
-    emissiveIntensity: 1,*/
 });
 
 export const earthTexture = new THREE.MeshStandardMaterial({
@@ -42,12 +40,14 @@ export const uranusTexture = new THREE.MeshStandardMaterial({
     map: textureLoader.load('./static/textures/planets/uranus.png'),
 });
 
-export const saturnRingTexture = new THREE.MeshStandardMaterial({
+export const saturnRingTexture = new THREE.MeshBasicMaterial({
     map: textureLoader.load('./static/textures/rings/saturnRing.png'),
+    transparent: true,
 });
 
-export const uranusRingTexture = new THREE.MeshStandardMaterial({
+export const uranusRingTexture = new THREE.MeshBasicMaterial({
     map: textureLoader.load('./static/textures/rings/uranusRing.png'),
+    transparent: true,
 });
 
 export const moonTexture = new THREE.MeshStandardMaterial({

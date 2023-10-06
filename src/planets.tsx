@@ -1,6 +1,15 @@
 import * as THREE from 'three';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
+function calculateDistance(object: any, camera: any)
+{
+    const vec3: any = new THREE.Vector3();
+    const cameraPosition = camera.position;
+    object.getWorldPosition(vec3);
+    const distance = cameraPosition.distanceTo(vec3);
+    return distance;
+}
+
 class CelestialBody
 {
     public radius: number;
@@ -94,6 +103,9 @@ export class Planet extends CelestialBody
     public star: any = null;
     public cloudsMesh: any = null;
     public cloudAxisSpeed: any = null;
+    public labelBase: any = null;
+    public satelliteLabels: any[] = [];
+    public baseMesh: any;
 
     constructor(scene: any, star: Star | Planet, radius: number, widthSeg: number, heightSeg: number, material: any, label: string, labelColor: string,
         pos: [number, number, number], axisSpeed: [number, number, number] = [0, 0, 0], orbitSpeed: [number, number, number] = [0, 0, 0],
@@ -114,6 +126,10 @@ export class Planet extends CelestialBody
         const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
         const orbitMat = new THREE.LineBasicMaterial({color: 0x0A96A0, linewidth: 1.0});
         const orbitLine = new THREE.Line(orbitGeo, orbitMat);
+        if(star instanceof Planet)
+        {
+            star.satelliteLabels.push(this.label);
+        }
         star.bodySystem.add(orbitLine);
         star.bodySystem.add(this.bodyOrbit);
     }
@@ -127,7 +143,6 @@ export class Planet extends CelestialBody
         this.ringMesh.rotateX(ringRotation[0]);
         this.ringMesh.rotateY(ringRotation[1]);
         this.ringMesh.rotateZ(ringRotation[2]);
-        console.log(this.ringMesh.position);
         this.bodySystem.add(this.ringMesh);
     }
 
@@ -137,6 +152,27 @@ export class Planet extends CelestialBody
         this.cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMaterial);
         this.cloudAxisSpeed = cloudAxisSpeed;
         this.bodySystem.add(this.cloudsMesh);
+    }
+
+    addBase(color: string, position: [number, number, number])
+    {
+        const baseGeo = new THREE.SphereGeometry(0.26, 10, 10);
+        const baseMat = new THREE.MeshBasicMaterial({color: color});
+        this.baseMesh = new THREE.Mesh(baseGeo, baseMat);
+
+        const divBase = document.createElement('div');
+        divBase.className = 'base-label';
+        divBase.textContent = `[ Base ]`;
+        divBase.style.backgroundColor = 'transparent';
+        divBase.style.color = color;
+        this.labelBase = new CSS2DObject(divBase);
+        this.labelBase.position.set(0, 0.0, 0 );
+        this.labelBase.center.set(0, 0);
+        this.labelBase.layers.set(0);
+
+        this.baseMesh.position.set(position[0], position[1], position[2]);
+        this.baseMesh.add(this.labelBase);
+        this.bodyMesh.add(this.baseMesh);
     }
 
     update(): void
@@ -152,6 +188,51 @@ export class Planet extends CelestialBody
             this.cloudsMesh.rotateX(this.cloudAxisSpeed[0]);
             this.cloudsMesh.rotateY(this.cloudAxisSpeed[1]);
             this.cloudsMesh.rotateZ(this.cloudAxisSpeed[2]);
+        }
+    }
+
+    updateBaseLabelVisibility(camera: any): void
+    {
+        if(this.labelBase !== null)
+        {
+            if(calculateDistance(this.labelBase, camera) >= 150)
+            {
+                this.labelBase.visible = false;
+            }
+            else
+            {
+                this.labelBase.visible = true;
+            }
+        }
+    }
+
+    updateSatellitesLabelVisibility(camera: any): void
+    {
+        if(this.satelliteLabels.length >= 1)
+        {
+            for(let i = 0; i < this.satelliteLabels.length; ++i)
+            {
+                if(calculateDistance(this.satelliteLabels[i], camera) >= 390)
+                {
+                    this.satelliteLabels[i].visible = false;
+                }
+                else
+                {
+                    this.satelliteLabels[i].visible = true;
+                }
+            }
+        }
+    }
+
+    updateSelfLabelVisibility(camera: any): void
+    {
+        if(calculateDistance(this.label, camera) >= 2000)
+        {
+            this.label.visible = false;
+        }
+        else
+        {
+            this.label.visible = true;
         }
     }
 }

@@ -51,3 +51,9 @@ html, body {
   font-family: MavenPro;
   font-weight: bold;
 }
+
+.base-label
+{
+  font-size: 16px;
+  color: rgb(99, 202, 236);
+}
