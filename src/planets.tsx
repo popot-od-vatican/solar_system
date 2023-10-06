@@ -150,6 +150,7 @@ export class Planet extends CelestialBody
     {
         const cloudsGeo = new THREE.SphereGeometry(this.radius*1.01, this.widthSeg, this.heightSeg);
         this.cloudsMesh = new THREE.Mesh(cloudsGeo, cloudsMaterial);
+        this.cloudsMesh.name = "Earth Clouds";
         this.cloudAxisSpeed = cloudAxisSpeed;
         this.bodySystem.add(this.cloudsMesh);
     }

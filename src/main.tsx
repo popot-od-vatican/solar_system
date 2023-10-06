@@ -33,6 +33,7 @@ camera.position.y = 100;
 camera.position.z = 200;
 camera.lookAt(0, 0, 0);
 
+// Komentiraj go za performance
 new RGBELoader()
 .load('./static/textures/background/starsbackground.hdr', function(texture){
   texture.mapping = THREE.EquirectangularReflectionMapping;
@@ -84,10 +85,8 @@ const plutoObj = new Planet(scene, sunObj, 0.5, 50, 50, plutoTexture, 'Pluto', '
 earthObj.addClouds(earthClouds, [0.0012, 0.013, 0.0016]);
 await loadModel();
 scene.add(spaceShip1.object);
-//spaceShip1.object.position.set(100, 0, 0);
-spaceShip1.setTargetBase(mercuryObj);
-spaceShip1.setStartingBase(earthObj);
-//spaceShip1.object.lookAt(190, 0, 0);
+spaceShip1.setStartingBase(mercuryObj);
+spaceShip1.setTargetBase(saturnObj);
 spaceShip1.startJourney();
 // BAZI
 mercuryObj.addBase('teal', [0, mercuryObj.radius-0.14, 0]);
@@ -122,8 +121,6 @@ function clickedObject(event: Event): void
       // TOMIIIIIIIIIIII
       console.log(intersects[i].object.name);
       // intersects[i].object.userData => object od Planet ili Star
-      console.log(intersects[i].object.userData);
-      console.log(typeof intersects);
       // Ostaj
       // Ako go trgnes returnot i raycastot pominuva preku povekje planeti ke bidat registrirani kako da si kliknal na povekje planeti vo isto vreme
       return;

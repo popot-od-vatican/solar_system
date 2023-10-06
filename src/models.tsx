@@ -46,8 +46,7 @@ class ship
     public middlePoint: any = new THREE.Vector3();
     public finished: boolean = false;
     public travelling: boolean = false;
-    public steps1: number = 0;
-    public steps2: number = -10;
+    public finishedMiddlePoint: boolean = false;
 
     constructor(object: any, speed: number)
     {
@@ -79,16 +78,16 @@ class ship
     {
         this.travelling = true;
         this.finished = false;
+        this.finishedMiddlePoint = false;
 
         this.getStartingPlanetPosition();
         this.getTargetPlanetPosition();
 
         this.middlePoint.x = (this.startingPosition.x+this.targetPosition.x)/2;
-        this.middlePoint.y = 70;
+        this.middlePoint.y = 40;
         this.middlePoint.z = (this.startingPosition.z+this.targetPosition.z)/2;
         this.object.lookAt(this.middlePoint.x, this.middlePoint.y, this.middlePoint.z);
         this.object.position.set(this.startingPosition.x, this.startingPosition.y, this.startingPosition.z);
-        this.steps1 = calculateDistance(this.object, null, this.middlePoint) / this.speed;
     }
 
     update(): void
@@ -102,30 +101,29 @@ class ship
             }
             if(this.targetPlanet !== null && this.startingPlanet !== null)
             {
-                if(this.steps1 > 0)
+                if(calculateDistance(this.object, null, this.middlePoint) >= 2.5 && !this.finishedMiddlePoint)
                 {
-                    //this.object.lookAt(this.middlePoint);
-                    //console.log('moving');
-                    const move = this.middlePoint.clone();
-                    move.normalize().multiplyScalar(this.speed);
-                    this.object.position.add(move);
-                    --this.steps1;
+                    this.object.lookAt(this.middlePoint);
+                    const moveDirection = new THREE.Vector3();
+                    this.object.getWorldDirection(moveDirection);
+                    moveDirection.multiplyScalar(this.speed);
+                    this.object.position.add(moveDirection);
                 }
-                else if(!this.finished)
+                else if(calculateDistance(this.object, this.targetPlanet.bodySystem) >= 1.0)
                 {
-                    this.steps2 = calculateDistance(this.object, this.targetPlanet.bodySystem) / this.speed;
+                    this.finishedMiddlePoint = true;
                     this.getTargetPlanetPosition();
                     this.object.lookAt(this.targetPosition);
-                    //console.log('moving second');
-                    const move = this.targetPosition.clone();
-                    move.normalize().multiplyScalar(this.speed);
-                    this.object.position.add(move);
-                    --this.steps2;
-
-                    if(this.steps2 <= 0)
-                    {
-                        this.finished = true;
-                    }
+                    const moveDirection = new THREE.Vector3();
+                    this.object.getWorldDirection(moveDirection);
+                    this.object.position.add(moveDirection);
+                }
+                else
+                {
+                    console.log('Finished Destination!');
+                    this.finished = true;
+                    this.travelling = false;
+                    this.object.visible = false;
                 }
             }
         }
@@ -144,7 +142,7 @@ export function loadModel(): any
                 }
             }
             object.scale.set(0.012, 0.012, 0.012);
-            spaceShip1 = new ship(object, 0.35); 
+            spaceShip1 = new ship(object, 0.09); 
             resolve('success');
         });
     });
